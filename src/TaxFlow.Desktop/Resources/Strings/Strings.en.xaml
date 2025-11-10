@@ -1,0 +1,77 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Application Strings - English -->
+    <sys:String x:Key="AppTitle">TaxFlow Enterprise</sys:String>
+    <sys:String x:Key="AppSubtitle">Egyptian Tax Invoice System</sys:String>
+
+    <!-- Navigation -->
+    <sys:String x:Key="Nav_Dashboard">Dashboard</sys:String>
+    <sys:String x:Key="Nav_Invoices">Invoices (B2B)</sys:String>
+    <sys:String x:Key="Nav_Receipts">Receipts (B2C)</sys:String>
+    <sys:String x:Key="Nav_Customers">Customers</sys:String>
+    <sys:String x:Key="Nav_Settings">Settings</sys:String>
+
+    <!-- Common Actions -->
+    <sys:String x:Key="Action_Add">Add</sys:String>
+    <sys:String x:Key="Action_Edit">Edit</sys:String>
+    <sys:String x:Key="Action_Delete">Delete</sys:String>
+    <sys:String x:Key="Action_Save">Save</sys:String>
+    <sys:String x:Key="Action_Cancel">Cancel</sys:String>
+    <sys:String x:Key="Action_Search">Search</sys:String>
+    <sys:String x:Key="Action_Filter">Filter</sys:String>
+    <sys:String x:Key="Action_Export">Export</sys:String>
+    <sys:String x:Key="Action_Import">Import</sys:String>
+    <sys:String x:Key="Action_Print">Print</sys:String>
+    <sys:String x:Key="Action_Submit">Submit to ETA</sys:String>
+    <sys:String x:Key="Action_Validate">Validate</sys:String>
+
+    <!-- Dashboard -->
+    <sys:String x:Key="Dashboard_Title">Dashboard</sys:String>
+    <sys:String x:Key="Dashboard_TotalInvoices">Total Invoices</sys:String>
+    <sys:String x:Key="Dashboard_TotalReceipts">Total Receipts</sys:String>
+    <sys:String x:Key="Dashboard_PendingSubmission">Pending Submission</sys:String>
+    <sys:String x:Key="Dashboard_Submitted">Submitted</sys:String>
+    <sys:String x:Key="Dashboard_Accepted">Accepted</sys:String>
+    <sys:String x:Key="Dashboard_Rejected">Rejected</sys:String>
+
+    <!-- Invoice Fields -->
+    <sys:String x:Key="Invoice_Number">Invoice Number</sys:String>
+    <sys:String x:Key="Invoice_Date">Date</sys:String>
+    <sys:String x:Key="Invoice_Customer">Customer</sys:String>
+    <sys:String x:Key="Invoice_TotalAmount">Total Amount</sys:String>
+    <sys:String x:Key="Invoice_Status">Status</sys:String>
+    <sys:String x:Key="Invoice_Type">Type</sys:String>
+
+    <!-- Customer Fields -->
+    <sys:String x:Key="Customer_Name">Name</sys:String>
+    <sys:String x:Key="Customer_TaxNumber">Tax Registration Number</sys:String>
+    <sys:String x:Key="Customer_CommercialReg">Commercial Registration</sys:String>
+    <sys:String x:Key="Customer_Address">Address</sys:String>
+    <sys:String x:Key="Customer_Email">Email</sys:String>
+    <sys:String x:Key="Customer_Phone">Phone</sys:String>
+
+    <!-- Status -->
+    <sys:String x:Key="Status_Draft">Draft</sys:String>
+    <sys:String x:Key="Status_Valid">Valid</sys:String>
+    <sys:String x:Key="Status_Invalid">Invalid</sys:String>
+    <sys:String x:Key="Status_Submitting">Submitting</sys:String>
+    <sys:String x:Key="Status_Submitted">Submitted</sys:String>
+    <sys:String x:Key="Status_Accepted">Accepted</sys:String>
+    <sys:String x:Key="Status_Rejected">Rejected</sys:String>
+
+    <!-- Messages -->
+    <sys:String x:Key="Msg_Loading">Loading...</sys:String>
+    <sys:String x:Key="Msg_Processing">Processing...</sys:String>
+    <sys:String x:Key="Msg_Success">Operation completed successfully</sys:String>
+    <sys:String x:Key="Msg_Error">An error occurred</sys:String>
+    <sys:String x:Key="Msg_Confirm">Are you sure?</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="Settings_Theme">Theme</sys:String>
+    <sys:String x:Key="Settings_Language">Language</sys:String>
+    <sys:String x:Key="Settings_LightTheme">Light Theme</sys:String>
+    <sys:String x:Key="Settings_DarkTheme">Dark Theme</sys:String>
+
+</ResourceDictionary>

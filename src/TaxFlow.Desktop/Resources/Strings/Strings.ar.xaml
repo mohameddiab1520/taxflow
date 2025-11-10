@@ -1,0 +1,77 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Application Strings - Arabic (RTL) -->
+    <sys:String x:Key="AppTitle">TaxFlow المؤسسي</sys:String>
+    <sys:String x:Key="AppSubtitle">نظام الفواتير الضريبية المصري</sys:String>
+
+    <!-- Navigation -->
+    <sys:String x:Key="Nav_Dashboard">لوحة التحكم</sys:String>
+    <sys:String x:Key="Nav_Invoices">الفواتير (B2B)</sys:String>
+    <sys:String x:Key="Nav_Receipts">الإيصالات (B2C)</sys:String>
+    <sys:String x:Key="Nav_Customers">العملاء</sys:String>
+    <sys:String x:Key="Nav_Settings">الإعدادات</sys:String>
+
+    <!-- Common Actions -->
+    <sys:String x:Key="Action_Add">إضافة</sys:String>
+    <sys:String x:Key="Action_Edit">تعديل</sys:String>
+    <sys:String x:Key="Action_Delete">حذف</sys:String>
+    <sys:String x:Key="Action_Save">حفظ</sys:String>
+    <sys:String x:Key="Action_Cancel">إلغاء</sys:String>
+    <sys:String x:Key="Action_Search">بحث</sys:String>
+    <sys:String x:Key="Action_Filter">تصفية</sys:String>
+    <sys:String x:Key="Action_Export">تصدير</sys:String>
+    <sys:String x:Key="Action_Import">استيراد</sys:String>
+    <sys:String x:Key="Action_Print">طباعة</sys:String>
+    <sys:String x:Key="Action_Submit">إرسال إلى مصلحة الضرائب</sys:String>
+    <sys:String x:Key="Action_Validate">التحقق</sys:String>
+
+    <!-- Dashboard -->
+    <sys:String x:Key="Dashboard_Title">لوحة التحكم</sys:String>
+    <sys:String x:Key="Dashboard_TotalInvoices">إجمالي الفواتير</sys:String>
+    <sys:String x:Key="Dashboard_TotalReceipts">إجمالي الإيصالات</sys:String>
+    <sys:String x:Key="Dashboard_PendingSubmission">بانتظار الإرسال</sys:String>
+    <sys:String x:Key="Dashboard_Submitted">تم الإرسال</sys:String>
+    <sys:String x:Key="Dashboard_Accepted">مقبول</sys:String>
+    <sys:String x:Key="Dashboard_Rejected">مرفوض</sys:String>
+
+    <!-- Invoice Fields -->
+    <sys:String x:Key="Invoice_Number">رقم الفاتورة</sys:String>
+    <sys:String x:Key="Invoice_Date">التاريخ</sys:String>
+    <sys:String x:Key="Invoice_Customer">العميل</sys:String>
+    <sys:String x:Key="Invoice_TotalAmount">المبلغ الإجمالي</sys:String>
+    <sys:String x:Key="Invoice_Status">الحالة</sys:String>
+    <sys:String x:Key="Invoice_Type">النوع</sys:String>
+
+    <!-- Customer Fields -->
+    <sys:String x:Key="Customer_Name">الاسم</sys:String>
+    <sys:String x:Key="Customer_TaxNumber">رقم التسجيل الضريبي</sys:String>
+    <sys:String x:Key="Customer_CommercialReg">السجل التجاري</sys:String>
+    <sys:String x:Key="Customer_Address">العنوان</sys:String>
+    <sys:String x:Key="Customer_Email">البريد الإلكتروني</sys:String>
+    <sys:String x:Key="Customer_Phone">الهاتف</sys:String>
+
+    <!-- Status -->
+    <sys:String x:Key="Status_Draft">مسودة</sys:String>
+    <sys:String x:Key="Status_Valid">صالح</sys:String>
+    <sys:String x:Key="Status_Invalid">غير صالح</sys:String>
+    <sys:String x:Key="Status_Submitting">جاري الإرسال</sys:String>
+    <sys:String x:Key="Status_Submitted">تم الإرسال</sys:String>
+    <sys:String x:Key="Status_Accepted">مقبول</sys:String>
+    <sys:String x:Key="Status_Rejected">مرفوض</sys:String>
+
+    <!-- Messages -->
+    <sys:String x:Key="Msg_Loading">جاري التحميل...</sys:String>
+    <sys:String x:Key="Msg_Processing">جاري المعالجة...</sys:String>
+    <sys:String x:Key="Msg_Success">تمت العملية بنجاح</sys:String>
+    <sys:String x:Key="Msg_Error">حدث خطأ</sys:String>
+    <sys:String x:Key="Msg_Confirm">هل أنت متأكد؟</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="Settings_Theme">المظهر</sys:String>
+    <sys:String x:Key="Settings_Language">اللغة</sys:String>
+    <sys:String x:Key="Settings_LightTheme">المظهر الفاتح</sys:String>
+    <sys:String x:Key="Settings_DarkTheme">المظهر الداكن</sys:String>
+
+</ResourceDictionary>
