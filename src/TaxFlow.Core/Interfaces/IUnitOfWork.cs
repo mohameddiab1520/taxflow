@@ -23,6 +23,26 @@ public interface IUnitOfWork : IDisposable
     IRepository<Customer> Customers { get; }
 
     /// <summary>
+    /// User repository
+    /// </summary>
+    IUserRepository Users { get; }
+
+    /// <summary>
+    /// Role repository
+    /// </summary>
+    IRoleRepository Roles { get; }
+
+    /// <summary>
+    /// Permission repository
+    /// </summary>
+    IPermissionRepository Permissions { get; }
+
+    /// <summary>
+    /// AuditLog repository
+    /// </summary>
+    IAuditLogRepository AuditLogs { get; }
+
+    /// <summary>
     /// Commits all changes to the database
     /// </summary>
     Task<int> CommitAsync(CancellationToken cancellationToken = default);

@@ -16,6 +16,10 @@ public class UnitOfWork : IUnitOfWork
     private IInvoiceRepository? _invoices;
     private IReceiptRepository? _receipts;
     private IRepository<Customer>? _customers;
+    private IUserRepository? _users;
+    private IRoleRepository? _roles;
+    private IPermissionRepository? _permissions;
+    private IAuditLogRepository? _auditLogs;
 
     public UnitOfWork(TaxFlowDbContext context)
     {
@@ -46,6 +50,42 @@ public class UnitOfWork : IUnitOfWork
         {
             _customers ??= new Repository<Customer>(_context);
             return _customers;
+        }
+    }
+
+    public IUserRepository Users
+    {
+        get
+        {
+            _users ??= new UserRepository(_context);
+            return _users;
+        }
+    }
+
+    public IRoleRepository Roles
+    {
+        get
+        {
+            _roles ??= new RoleRepository(_context);
+            return _roles;
+        }
+    }
+
+    public IPermissionRepository Permissions
+    {
+        get
+        {
+            _permissions ??= new PermissionRepository(_context);
+            return _permissions;
+        }
+    }
+
+    public IAuditLogRepository AuditLogs
+    {
+        get
+        {
+            _auditLogs ??= new AuditLogRepository(_context);
+            return _auditLogs;
         }
     }
 

@@ -22,6 +22,7 @@ using TaxFlow.Infrastructure.Services.Processing;
 using TaxFlow.Infrastructure.Services.Notifications;
 using TaxFlow.Infrastructure.Services.Jobs;
 using TaxFlow.Infrastructure.Services.Reporting;
+using TaxFlow.Infrastructure.Services.Auth;
 
 namespace TaxFlow.Desktop;
 
@@ -78,15 +79,26 @@ public partial class App : Application
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IReceiptRepository, ReceiptRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
         // Application Services
         services.AddScoped<ITaxCalculationService, TaxCalculationService>();
         services.AddHttpClient<IEtaAuthenticationService, EtaAuthenticationService>();
         services.AddHttpClient<IEtaSubmissionService, EtaSubmissionService>();
 
+        // Authentication & Authorization Services
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IMfaService, MfaService>();
+
         // Phase 3: Security Services
         services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
         services.AddScoped<ICertificateService, CertificateService>();
+        services.AddScoped<IEncryptionService, EncryptionService>();
 
         // Phase 3: Processing Services
         services.AddScoped<IBatchProcessingService, BatchProcessingService>();
