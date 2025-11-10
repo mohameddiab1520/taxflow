@@ -16,6 +16,12 @@ using TaxFlow.Infrastructure.Services.ETA;
 using TaxFlow.Desktop.ViewModels.Invoices;
 using TaxFlow.Desktop.ViewModels.Customers;
 using TaxFlow.Desktop.ViewModels.Receipts;
+using TaxFlow.Desktop.ViewModels.Settings;
+using TaxFlow.Infrastructure.Services.Security;
+using TaxFlow.Infrastructure.Services.Processing;
+using TaxFlow.Infrastructure.Services.Notifications;
+using TaxFlow.Infrastructure.Services.Jobs;
+using TaxFlow.Infrastructure.Services.Reporting;
 
 namespace TaxFlow.Desktop;
 
@@ -78,6 +84,18 @@ public partial class App : Application
         services.AddHttpClient<IEtaAuthenticationService, EtaAuthenticationService>();
         services.AddHttpClient<IEtaSubmissionService, EtaSubmissionService>();
 
+        // Phase 3: Security Services
+        services.AddScoped<IDigitalSignatureService, DigitalSignatureService>();
+        services.AddScoped<ICertificateService, CertificateService>();
+
+        // Phase 3: Processing Services
+        services.AddScoped<IBatchProcessingService, BatchProcessingService>();
+        services.AddSingleton<IBackgroundJobService, BackgroundJobService>();
+        services.AddSingleton<INotificationService, NotificationService>();
+
+        // Phase 3: Reporting Services
+        services.AddScoped<IReportingService, ReportingService>();
+
         // UI Services
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
@@ -99,7 +117,10 @@ public partial class App : Application
         services.AddTransient<CustomerListViewModel>();
         services.AddTransient<CustomerViewModel>();
 
+        // Settings ViewModels
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<CertificateManagementViewModel>();
+        services.AddTransient<BatchSubmissionViewModel>();
 
         // Views
         services.AddSingleton<MainWindow>();
