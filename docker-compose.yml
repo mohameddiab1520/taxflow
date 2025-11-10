@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # TaxFlow API Service
+  taxflow-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taxflow-api
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SQLite=Data Source=/app/data/taxflow.db
+      - ConnectionStrings__PostgreSQL=Host=postgres;Database=taxflow_analytics;Username=postgres;Password=postgres123
+      - ConnectionStrings__Redis=redis:6379
+      - ETA__Environment=Production
+      - ETA__AuthUrl=https://id.eta.gov.eg/connect/token
+      - ETA__ApiUrl=https://api.invoicing.eta.gov.eg/api/v1
+    volumes:
+      - taxflow-data:/app/data
+      - taxflow-logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - taxflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database for Analytics
+  postgres:
+    image: postgres:16-alpine
+    container_name: taxflow-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=taxflow_analytics
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - taxflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: taxflow-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis-data:/data
+    networks:
+      - taxflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # pgAdmin for PostgreSQL Management (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: taxflow-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@taxflow.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - taxflow-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # Redis Commander for Redis Management (Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: taxflow-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:redis123
+    networks:
+      - taxflow-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+volumes:
+  taxflow-data:
+    driver: local
+  taxflow-logs:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+networks:
+  taxflow-network:
+    driver: bridge

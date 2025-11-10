@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Build Desktop Application
+      run: |
+        dotnet publish src/TaxFlow.Desktop/TaxFlow.Desktop.csproj \
+          -c Release \
+          -o ./publish/desktop \
+          -p:Version=${{ steps.get_version.outputs.VERSION }} \
+          -p:PublishSingleFile=true \
+          -p:SelfContained=true \
+          -r win-x64
+
+    - name: Build API
+      run: |
+        dotnet publish src/TaxFlow.Api/TaxFlow.Api.csproj \
+          -c Release \
+          -o ./publish/api \
+          -p:Version=${{ steps.get_version.outputs.VERSION }}
+
+    - name: Create Desktop ZIP
+      run: |
+        cd ./publish/desktop
+        zip -r ../../TaxFlow-Desktop-${{ steps.get_version.outputs.VERSION }}-win-x64.zip .
+        cd ../..
+
+    - name: Create API ZIP
+      run: |
+        cd ./publish/api
+        zip -r ../../TaxFlow-API-${{ steps.get_version.outputs.VERSION }}.zip .
+        cd ../..
+
+    - name: Generate changelog
+      id: changelog
+      uses: metcalfc/changelog-generator@v4.1.0
+      with:
+        myToken: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: TaxFlow Enterprise ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## What's Changed
+          ${{ steps.changelog.outputs.changelog }}
+
+          ## Downloads
+          - **Desktop Application (Windows x64)**: TaxFlow-Desktop-${{ steps.get_version.outputs.VERSION }}-win-x64.zip
+          - **API Server**: TaxFlow-API-${{ steps.get_version.outputs.VERSION }}.zip
+
+          ## Installation
+          See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for installation instructions.
+
+          ## Full Changelog
+          https://github.com/${{ github.repository }}/compare/v${{ steps.changelog.outputs.from_tag }}...v${{ steps.get_version.outputs.VERSION }}
+        files: |
+          TaxFlow-Desktop-${{ steps.get_version.outputs.VERSION }}-win-x64.zip
+          TaxFlow-API-${{ steps.get_version.outputs.VERSION }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          taxflow/taxflow-api:latest
+          taxflow/taxflow-api:${{ steps.get_version.outputs.VERSION }}
