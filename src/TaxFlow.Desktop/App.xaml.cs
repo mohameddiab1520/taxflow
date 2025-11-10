@@ -11,6 +11,9 @@ using TaxFlow.Desktop.Views;
 using TaxFlow.Desktop.Services;
 using StackExchange.Redis;
 using TaxFlow.Infrastructure.Caching;
+using TaxFlow.Application.Services;
+using TaxFlow.Infrastructure.Services.ETA;
+using TaxFlow.Desktop.ViewModels.Invoices;
 
 namespace TaxFlow.Desktop;
 
@@ -68,7 +71,12 @@ public partial class App : Application
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IReceiptRepository, ReceiptRepository>();
 
-        // Services
+        // Application Services
+        services.AddScoped<ITaxCalculationService, TaxCalculationService>();
+        services.AddHttpClient<IEtaAuthenticationService, EtaAuthenticationService>();
+        services.AddHttpClient<IEtaSubmissionService, EtaSubmissionService>();
+
+        // UI Services
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<INavigationService, NavigationService>();
@@ -77,6 +85,7 @@ public partial class App : Application
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<InvoiceListViewModel>();
+        services.AddTransient<InvoiceViewModel>();
         services.AddTransient<ReceiptListViewModel>();
         services.AddTransient<CustomerListViewModel>();
         services.AddTransient<SettingsViewModel>();
