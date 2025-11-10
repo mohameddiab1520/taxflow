@@ -5,9 +5,8 @@ namespace TaxFlow.Core.Entities;
 /// <summary>
 /// User entity for authentication and authorization
 /// </summary>
-public class User
+public class User : BaseEntity
 {
-    public Guid Id { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
@@ -17,7 +16,6 @@ public class User
     public bool IsActive { get; set; } = true;
     public bool EmailConfirmed { get; set; }
     public string? SecurityStamp { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
     public string? LastLoginIp { get; set; }
     public int FailedLoginAttempts { get; set; }
@@ -31,14 +29,12 @@ public class User
 /// <summary>
 /// Role entity representing a set of permissions
 /// </summary>
-public class Role
+public class Role : BaseEntity
 {
-    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsSystemRole { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
@@ -48,9 +44,8 @@ public class Role
 /// <summary>
 /// Permission entity representing a specific action
 /// </summary>
-public class Permission
+public class Permission : BaseEntity
 {
-    public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
@@ -94,9 +89,8 @@ public class RolePermission
 /// <summary>
 /// Audit log for tracking user actions
 /// </summary>
-public class AuditLog
+public class AuditLog : BaseEntity
 {
-    public Guid Id { get; set; }
     public Guid? UserId { get; set; }
     public User? User { get; set; }
     public string Action { get; set; } = string.Empty;
@@ -106,5 +100,4 @@ public class AuditLog
     public string? NewValues { get; set; }
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
