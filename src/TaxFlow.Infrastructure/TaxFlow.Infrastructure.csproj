@@ -21,6 +21,9 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <!-- Phase 4: Advanced Reporting -->
+    <PackageReference Include="QuestPDF" Version="2024.12.3" />
+    <PackageReference Include="ClosedXML" Version="0.104.1" />
   </ItemGroup>
 
 </Project>
