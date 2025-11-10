@@ -1,0 +1,39 @@
+<Application x:Class="TaxFlow.Desktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:TaxFlow.Desktop.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- MahApps.Metro Resource Dictionaries -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+
+                <!-- Theme (Dark/Light will be set programmatically) -->
+                <ResourceDictionary x:Name="ThemeResource" Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Steel.xaml" />
+
+                <!-- IconPacks -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro.IconPacks.Material;component/Themes/PackIconMaterial.xaml" />
+
+                <!-- Application-specific Resources -->
+                <ResourceDictionary Source="Resources/AppStyles.xaml" />
+                <ResourceDictionary Source="Resources/AppColors.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Global Styles -->
+            <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="14" />
+            </Style>
+
+            <!-- Converters -->
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+            <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+            <converters:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+            <converters:RelativeTimeConverter x:Key="RelativeTimeConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

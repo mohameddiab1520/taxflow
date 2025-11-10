@@ -1,0 +1,303 @@
+<UserControl x:Class="TaxFlow.Desktop.Views.Settings.CertificateManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="إدارة الشهادات الرقمية"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       FlowDirection="RightToLeft"/>
+            <TextBlock Text="إدارة الشهادات الرقمية المستخدمة للتوقيع الإلكتروني وإرسال الفواتير إلى مصلحة الضرائب"
+                       FontSize="14"
+                       Foreground="{DynamicResource MahApps.Brushes.Gray3}"
+                       Margin="0,5,0,0"
+                       FlowDirection="RightToLeft"/>
+        </StackPanel>
+
+        <!-- Statistics Cards -->
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Total Certificates -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource MahApps.Brushes.Accent4}"
+                    CornerRadius="5"
+                    Padding="15"
+                    Margin="0,0,10,0">
+                <StackPanel FlowDirection="RightToLeft">
+                    <TextBlock Text="إجمالي الشهادات"
+                               FontSize="12"
+                               Foreground="White"
+                               Opacity="0.8"/>
+                    <TextBlock Text="{Binding TotalCertificates}"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Valid Certificates -->
+            <Border Grid.Column="1"
+                    Background="#4CAF50"
+                    CornerRadius="5"
+                    Padding="15"
+                    Margin="0,0,10,0">
+                <StackPanel FlowDirection="RightToLeft">
+                    <TextBlock Text="صالحة"
+                               FontSize="12"
+                               Foreground="White"
+                               Opacity="0.8"/>
+                    <TextBlock Text="{Binding ValidCertificates}"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Expiring Certificates -->
+            <Border Grid.Column="2"
+                    Background="#FF9800"
+                    CornerRadius="5"
+                    Padding="15"
+                    Margin="0,0,10,0">
+                <StackPanel FlowDirection="RightToLeft">
+                    <TextBlock Text="قريبة من الانتهاء"
+                               FontSize="12"
+                               Foreground="White"
+                               Opacity="0.8"/>
+                    <TextBlock Text="{Binding ExpiringCertificates}"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Expired Certificates -->
+            <Border Grid.Column="3"
+                    Background="#F44336"
+                    CornerRadius="5"
+                    Padding="15">
+                <StackPanel FlowDirection="RightToLeft">
+                    <TextBlock Text="منتهية"
+                               FontSize="12"
+                               Foreground="White"
+                               Opacity="0.8"/>
+                    <TextBlock Text="{Binding ExpiredCertificates}"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Certificates List -->
+            <GroupBox Grid.Column="0"
+                      Header="الشهادات المتاحة"
+                      Margin="0,0,10,0"
+                      FlowDirection="RightToLeft">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Toolbar -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal"
+                                Margin="0,0,0,10"
+                                FlowDirection="RightToLeft">
+                        <Button Content="تحديث"
+                                Command="{Binding RefreshCommand}"
+                                Style="{StaticResource MahApps.Styles.Button.Square.Accent}"
+                                Margin="0,0,10,0">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔄" FontSize="16" Margin="0,0,5,0"/>
+                                        <TextBlock Text="تحديث"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                        <Button Content="تثبيت شهادة"
+                                Command="{Binding InstallCertificateCommand}"
+                                Margin="0,0,10,0">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📥" FontSize="16" Margin="0,0,5,0"/>
+                                        <TextBlock Text="تثبيت"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                        <Button Content="فحص انتهاء الصلاحية"
+                                Command="{Binding CheckExpiringCertificatesCommand}">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚠️" FontSize="16" Margin="0,0,5,0"/>
+                                        <TextBlock Text="فحص"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- DataGrid -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Certificates}"
+                              SelectedItem="{Binding SelectedCertificate}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              FlowDirection="LeftToRight">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="الموضوع"
+                                                Binding="{Binding Subject}"
+                                                Width="*"/>
+                            <DataGridTextColumn Header="الجهة المصدرة"
+                                                Binding="{Binding Issuer}"
+                                                Width="*"/>
+                            <DataGridTextColumn Header="صالح من"
+                                                Binding="{Binding ValidFrom, StringFormat=yyyy-MM-dd}"
+                                                Width="100"/>
+                            <DataGridTextColumn Header="صالح حتى"
+                                                Binding="{Binding ValidTo, StringFormat=yyyy-MM-dd}"
+                                                Width="100"/>
+                            <DataGridTextColumn Header="الأيام المتبقية"
+                                                Binding="{Binding DaysUntilExpiry}"
+                                                Width="100"/>
+                            <DataGridCheckBoxColumn Header="صالحة"
+                                                    Binding="{Binding IsValid}"
+                                                    Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </GroupBox>
+
+            <!-- Certificate Details & Actions -->
+            <GroupBox Grid.Column="1"
+                      Header="تفاصيل الشهادة"
+                      FlowDirection="RightToLeft">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Certificate Info -->
+                        <TextBlock Text="معلومات الشهادة"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Thumbprint:"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource MahApps.Brushes.Gray3}"/>
+                        <TextBlock Text="{Binding SelectedCertificate.Thumbprint}"
+                                   TextWrapping="Wrap"
+                                   FontSize="10"
+                                   Margin="0,0,0,10"/>
+
+                        <TextBlock Text="الرقم التسلسلي:"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource MahApps.Brushes.Gray3}"/>
+                        <TextBlock Text="{Binding SelectedCertificate.SerialNumber}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10"/>
+
+                        <Separator Margin="0,10"/>
+
+                        <!-- Validation Status -->
+                        <TextBlock Text="حالة التحقق"
+                                   FontWeight="Bold"
+                                   Margin="0,10,0,10"/>
+
+                        <Border Background="{DynamicResource MahApps.Brushes.Gray10}"
+                                BorderBrush="{DynamicResource MahApps.Brushes.Gray7}"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Padding="10"
+                                Margin="0,0,0,10">
+                            <TextBlock Text="{Binding ValidationMessage}"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"/>
+                        </Border>
+
+                        <Separator Margin="0,10"/>
+
+                        <!-- Actions -->
+                        <TextBlock Text="الإجراءات"
+                                   FontWeight="Bold"
+                                   Margin="0,10,0,10"/>
+
+                        <Button Content="التحقق من الشهادة"
+                                Command="{Binding ValidateCertificateCommand}"
+                                Style="{StaticResource MahApps.Styles.Button.Square.Accent}"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Stretch"/>
+
+                        <Button Content="تحديد كشهادة افتراضية"
+                                Command="{Binding SelectCertificateCommand}"
+                                CommandParameter="{Binding SelectedCertificate}"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Stretch"/>
+
+                        <Button Content="تصدير الشهادة"
+                                Command="{Binding ExportCertificateCommand}"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Stretch"/>
+
+                        <Button Content="حذف الشهادة"
+                                Command="{Binding RemoveCertificateCommand}"
+                                Background="#F44336"
+                                Foreground="White"
+                                HorizontalAlignment="Stretch"/>
+
+                        <!-- Loading Indicator -->
+                        <mah:ProgressRing IsActive="{Binding IsBusy}"
+                                         Width="40"
+                                         Height="40"
+                                         Margin="0,20,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </GroupBox>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource MahApps.Brushes.Gray10}"
+                Padding="10"
+                Margin="0,10,0,0"
+                CornerRadius="3">
+            <TextBlock Text="{Binding StatusMessage}"
+                       FontSize="12"
+                       FlowDirection="RightToLeft"/>
+        </Border>
+    </Grid>
+</UserControl>
