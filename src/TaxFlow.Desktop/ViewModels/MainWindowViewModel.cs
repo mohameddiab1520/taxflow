@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TaxFlow.Desktop.Services;
+using TaxFlow.Desktop.ViewModels.Invoices;
+using TaxFlow.Desktop.ViewModels.Customers;
 
 namespace TaxFlow.Desktop.ViewModels;
 
@@ -95,10 +97,7 @@ public partial class MainWindowViewModel : ViewModelBase
 }
 
 /// <summary>
-/// Placeholder view models (to be implemented)
+/// Placeholder view models
 /// </summary>
-public class DashboardViewModel : ViewModelBase { }
-public class InvoiceListViewModel : ViewModelBase { }
 public class ReceiptListViewModel : ViewModelBase { }
-public class CustomerListViewModel : ViewModelBase { }
 public class SettingsViewModel : ViewModelBase { }

@@ -14,6 +14,8 @@ using TaxFlow.Infrastructure.Caching;
 using TaxFlow.Application.Services;
 using TaxFlow.Infrastructure.Services.ETA;
 using TaxFlow.Desktop.ViewModels.Invoices;
+using TaxFlow.Desktop.ViewModels.Customers;
+using TaxFlow.Desktop.ViewModels.Receipts;
 
 namespace TaxFlow.Desktop;
 
@@ -84,10 +86,19 @@ public partial class App : Application
         // ViewModels
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
+
+        // Invoice ViewModels
         services.AddTransient<InvoiceListViewModel>();
         services.AddTransient<InvoiceViewModel>();
+
+        // Receipt ViewModels
         services.AddTransient<ReceiptListViewModel>();
+        services.AddTransient<ReceiptViewModel>();
+
+        // Customer ViewModels
         services.AddTransient<CustomerListViewModel>();
+        services.AddTransient<CustomerViewModel>();
+
         services.AddTransient<SettingsViewModel>();
 
         // Views
