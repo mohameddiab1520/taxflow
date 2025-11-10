@@ -31,10 +31,11 @@
                 </StackPanel>
 
                 <!-- Action Buttons -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
-                            Style="{StaticResource MahApps.Styles.Button.Square.Accent}">
+                            Style="{StaticResource MahApps.Styles.Button.Square.Accent}"
+                            Margin="0,0,10,0">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -47,7 +48,8 @@
 
                     <Button Content="Validate"
                             Command="{Binding ValidateCommand}"
-                            Style="{StaticResource MahApps.Styles.Button.Square}">
+                            Style="{StaticResource MahApps.Styles.Button.Square}"
+                            Margin="0,0,10,0">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
