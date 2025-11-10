@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using TaxFlow.Core.Entities;
 using TaxFlow.Core.Enums;
+using Polly;
+using Polly.Retry;
 
 namespace TaxFlow.Infrastructure.Services.ETA;
 
@@ -17,6 +19,7 @@ public class EtaSubmissionService : IEtaSubmissionService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IEtaAuthenticationService _authService;
+    private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 
     private string EtaApiUrl => _configuration["ETA:ApiUrl"] ?? "https://api.invoicing.eta.gov.eg/api/v1";
 
@@ -28,6 +31,21 @@ public class EtaSubmissionService : IEtaSubmissionService
         _httpClient = httpClient;
         _configuration = configuration;
         _authService = authService;
+
+        // Configure Polly retry policy for ETA submissions
+        _retryPolicy = Policy<HttpResponseMessage>
+            .Handle<HttpRequestException>()
+            .Or<TaskCanceledException>()
+            .OrResult(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                onRetry: (outcome, timespan, retryCount, context) =>
+                {
+                    Log.Warning("ETA submission retry {RetryCount} after {Delay}s due to {Reason}",
+                        retryCount, timespan.TotalSeconds,
+                        outcome.Exception?.Message ?? outcome.Result?.ReasonPhrase ?? "Unknown");
+                });
     }
 
     public async Task<EtaSubmissionResult> SubmitInvoiceAsync(
@@ -53,8 +71,9 @@ public class EtaSubmissionService : IEtaSubmissionService
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // Submit to ETA
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+            // Submit to ETA with retry policy
+            var response = await _retryPolicy.ExecuteAsync(async () =>
+                await _httpClient.SendAsync(request, cancellationToken));
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -161,7 +180,9 @@ public class EtaSubmissionService : IEtaSubmissionService
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+            // Submit with retry policy
+            var response = await _retryPolicy.ExecuteAsync(async () =>
+                await _httpClient.SendAsync(request, cancellationToken));
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)

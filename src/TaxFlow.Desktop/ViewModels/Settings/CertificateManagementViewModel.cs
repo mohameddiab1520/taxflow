@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TaxFlow.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace TaxFlow.Desktop.ViewModels.Settings;
 
@@ -144,8 +147,14 @@ public partial class CertificateManagementViewModel : ViewModelBase
             if (dialog.ShowDialog() != true)
                 return;
 
-            // In production, prompt for password securely
-            var password = ""; // TODO: Show password dialog
+            // Prompt for password securely
+            var password = await PromptForPasswordAsync("Enter certificate password:");
+
+            if (password == null)
+            {
+                _logger.LogInformation("Certificate installation cancelled by user");
+                return;
+            }
 
             var success = await _certificateService.InstallCertificateAsync(
                 dialog.FileName,
@@ -188,8 +197,14 @@ public partial class CertificateManagementViewModel : ViewModelBase
             if (dialog.ShowDialog() != true)
                 return;
 
-            // In production, prompt for password securely
-            var password = ""; // TODO: Show password dialog
+            // Prompt for password securely
+            var password = await PromptForPasswordAsync("Enter password to protect exported certificate:");
+
+            if (password == null)
+            {
+                _logger.LogInformation("Certificate export cancelled by user");
+                return;
+            }
 
             var success = await _certificateService.ExportCertificateAsync(
                 SelectedCertificate.Thumbprint,
@@ -312,6 +327,54 @@ public partial class CertificateManagementViewModel : ViewModelBase
         if (value != null)
         {
             _ = ValidateCertificateAsync();
+        }
+    }
+
+    /// <summary>
+    /// Prompts user for password using MahApps.Metro dialog
+    /// </summary>
+    private async Task<string?> PromptForPasswordAsync(string message)
+    {
+        try
+        {
+            // Get the main window for dialog context
+            var mainWindow = Application.Current.MainWindow as MetroWindow;
+            if (mainWindow == null)
+            {
+                // Fallback to simple dialog if MetroWindow is not available
+                var passwordDialog = new System.Windows.Controls.PasswordBox();
+                var result = MessageBox.Show(
+                    $"{message}\nPlease enter password in the console or configuration.",
+                    "Password Required",
+                    MessageBoxButton.OKCancel,
+                    MessageBoxImage.Question);
+
+                return result == MessageBoxResult.OK ? string.Empty : null;
+            }
+
+            // Use MahApps.Metro LoginDialog for password input
+            var loginDialogSettings = new LoginDialogSettings
+            {
+                InitialUsername = string.Empty,
+                UsernameWatermark = "Not required",
+                PasswordWatermark = "Certificate password",
+                NegativeButtonText = "Cancel",
+                AffirmativeButtonText = "OK",
+                EnablePasswordPreview = true,
+                RememberCheckBoxVisibility = System.Windows.Visibility.Collapsed
+            };
+
+            var dialogResult = await mainWindow.ShowLoginAsync(
+                "Certificate Password",
+                message,
+                loginDialogSettings);
+
+            return dialogResult != null ? dialogResult.Password : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing password dialog");
+            return string.Empty; // Return empty password on error
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TaxFlow.Core.Entities;
@@ -6,6 +7,8 @@ using TaxFlow.Core.Enums;
 using TaxFlow.Core.Interfaces;
 using TaxFlow.Desktop.Services;
 using Microsoft.Extensions.Logging;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace TaxFlow.Desktop.ViewModels.Invoices;
 
@@ -16,6 +19,7 @@ public partial class InvoiceListViewModel : ViewModelBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly INavigationService _navigationService;
+    private readonly IReportingService _reportingService;
     private readonly ILogger<InvoiceListViewModel> _logger;
 
     [ObservableProperty]
@@ -54,10 +58,12 @@ public partial class InvoiceListViewModel : ViewModelBase
     public InvoiceListViewModel(
         IUnitOfWork unitOfWork,
         INavigationService navigationService,
+        IReportingService reportingService,
         ILogger<InvoiceListViewModel> logger)
     {
         _unitOfWork = unitOfWork;
         _navigationService = navigationService;
+        _reportingService = reportingService;
         _logger = logger;
 
         // Set default date filter (last 30 days)
@@ -147,9 +153,8 @@ public partial class InvoiceListViewModel : ViewModelBase
     [RelayCommand]
     private void CreateNewInvoice()
     {
-        // Navigate to invoice creation view
         _logger.LogInformation("Creating new invoice");
-        // TODO: Navigate to InvoiceViewModel
+        _navigationService.NavigateTo<InvoiceViewModel>();
     }
 
     /// <summary>
@@ -162,7 +167,7 @@ public partial class InvoiceListViewModel : ViewModelBase
             return;
 
         _logger.LogInformation("Editing invoice {InvoiceNumber}", invoice.InvoiceNumber);
-        // TODO: Navigate to InvoiceViewModel with invoice ID
+        _navigationService.NavigateTo<InvoiceViewModel>(invoice.Id);
     }
 
     /// <summary>
@@ -174,7 +179,14 @@ public partial class InvoiceListViewModel : ViewModelBase
         if (invoice == null)
             return;
 
-        // TODO: Show confirmation dialog
+        // Show confirmation dialog
+        var result = await ShowConfirmationDialogAsync(
+            "Delete Invoice",
+            $"Are you sure you want to delete invoice '{invoice.InvoiceNumber}'?\n\nThis action cannot be undone.");
+
+        if (!result)
+            return;
+
         await ExecuteAsync(async () =>
         {
             await _unitOfWork.Invoices.DeleteAsync(invoice);
@@ -196,8 +208,34 @@ public partial class InvoiceListViewModel : ViewModelBase
     {
         await ExecuteAsync(async () =>
         {
-            // TODO: Implement Excel export
             _logger.LogInformation("Exporting {Count} invoices to Excel", Invoices.Count);
+
+            var options = new InvoiceExportOptions
+            {
+                StartDate = FilterStartDate,
+                EndDate = FilterEndDate,
+                Status = FilterStatus?.ToString()
+            };
+
+            var excelBytes = await _reportingService.ExportInvoicesToExcelAsync(options);
+
+            // Save file dialog
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx|All Files (*.*)|*.*",
+                FileName = $"Invoices_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                Title = "Export Invoices to Excel"
+            };
+
+            if (saveDialog.ShowDialog() == true)
+            {
+                await File.WriteAllBytesAsync(saveDialog.FileName, excelBytes);
+                _logger.LogInformation("Invoices exported successfully to {Path}", saveDialog.FileName);
+
+                await ShowMessageDialogAsync(
+                    "Export Successful",
+                    $"Invoices have been exported successfully to:\n{saveDialog.FileName}");
+            }
 
         }, "Exporting to Excel...");
     }
@@ -250,5 +288,61 @@ public partial class InvoiceListViewModel : ViewModelBase
     {
         _ = LoadInvoicesAsync();
         _ = LoadStatisticsAsync();
+    }
+
+    /// <summary>
+    /// Shows confirmation dialog
+    /// </summary>
+    private async Task<bool> ShowConfirmationDialogAsync(string title, string message)
+    {
+        try
+        {
+            var mainWindow = Application.Current.MainWindow as MetroWindow;
+            if (mainWindow == null)
+            {
+                var result = MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+                return result == MessageBoxResult.Yes;
+            }
+
+            var dialogResult = await mainWindow.ShowMessageAsync(
+                title,
+                message,
+                MessageDialogStyle.AffirmativeAndNegative,
+                new MetroDialogSettings
+                {
+                    AffirmativeButtonText = "Yes",
+                    NegativeButtonText = "No",
+                    DefaultButtonFocus = MessageDialogResult.Negative
+                });
+
+            return dialogResult == MessageDialogResult.Affirmative;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing confirmation dialog");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Shows message dialog
+    /// </summary>
+    private async Task ShowMessageDialogAsync(string title, string message)
+    {
+        try
+        {
+            var mainWindow = Application.Current.MainWindow as MetroWindow;
+            if (mainWindow == null)
+            {
+                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            await mainWindow.ShowMessageAsync(title, message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing message dialog");
+        }
     }
 }

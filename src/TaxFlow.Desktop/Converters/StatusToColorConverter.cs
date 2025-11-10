@@ -36,7 +36,8 @@ public class StatusToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // ConvertBack not supported for color to status conversion
+        throw new NotSupportedException("ConvertBack is not supported for StatusToColorConverter");
     }
 }
 
@@ -82,7 +83,8 @@ public class NullToBooleanConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // ConvertBack not supported for null to boolean conversion
+        throw new NotSupportedException("ConvertBack is not supported for NullToBooleanConverter");
     }
 }
 
@@ -118,6 +120,7 @@ public class RelativeTimeConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // ConvertBack not supported for relative time conversion
+        throw new NotSupportedException("ConvertBack is not supported for RelativeTimeConverter");
     }
 }
