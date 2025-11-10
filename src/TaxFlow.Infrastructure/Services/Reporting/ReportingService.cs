@@ -1,5 +1,6 @@
 using TaxFlow.Core.Entities;
 using TaxFlow.Core.Interfaces;
+using TaxFlow.Core.Exceptions;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using QuestPDF.Fluent;
@@ -40,7 +41,10 @@ public class ReportingService : IReportingService
         {
             var invoice = await _unitOfWork.Invoices.GetWithDetailsAsync(invoiceId);
             if (invoice == null)
-                throw new Exception("Invoice not found");
+                throw new DocumentNotFoundException(
+                    $"Invoice with ID {invoiceId} not found",
+                    invoiceId.ToString(),
+                    "Invoice");
 
             _logger.LogInformation("Generating PDF for invoice {InvoiceNumber}", invoice.InvoiceNumber);
 
@@ -272,7 +276,10 @@ public class ReportingService : IReportingService
         {
             var receipt = await _unitOfWork.Receipts.GetWithDetailsAsync(receiptId);
             if (receipt == null)
-                throw new Exception("Receipt not found");
+                throw new DocumentNotFoundException(
+                    $"Receipt with ID {receiptId} not found",
+                    receiptId.ToString(),
+                    "Receipt");
 
             _logger.LogInformation("Generating PDF for receipt {ReceiptNumber}", receipt.ReceiptNumber);
 

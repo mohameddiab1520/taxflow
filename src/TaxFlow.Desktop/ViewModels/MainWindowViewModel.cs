@@ -95,9 +95,3 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentViewModel = viewModel;
     }
 }
-
-/// <summary>
-/// Placeholder view models
-/// </summary>
-public class ReceiptListViewModel : ViewModelBase { }
-public class SettingsViewModel : ViewModelBase { }

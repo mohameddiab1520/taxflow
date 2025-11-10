@@ -19,6 +19,8 @@ public class TaxFlowDbContext : DbContext
     public DbSet<Receipt> Receipts => Set<Receipt>();
     public DbSet<ReceiptLine> ReceiptLines => Set<ReceiptLine>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<BatchHistory> BatchHistories => Set<BatchHistory>();
+    public DbSet<BatchItemHistory> BatchItemHistories => Set<BatchItemHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -131,6 +133,47 @@ public class TaxFlowDbContext : DbContext
                 address.Property(a => a.Landmark).HasMaxLength(200);
                 address.Property(a => a.AdditionalInformation).HasMaxLength(500);
             });
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure BatchHistory entity
+        modelBuilder.Entity<BatchHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.BatchId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.BatchType);
+            entity.HasIndex(e => e.StartedAt);
+            entity.HasIndex(e => new { e.BatchType, e.Status });
+            entity.HasIndex(e => new { e.StartedAt, e.Status });
+
+            entity.Property(e => e.BatchType).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+            entity.Property(e => e.CertificateThumbprint).HasMaxLength(100);
+
+            entity.HasMany(e => e.ItemHistories)
+                .WithOne(i => i.BatchHistory)
+                .HasForeignKey(i => i.BatchHistoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure BatchItemHistory entity
+        modelBuilder.Entity<BatchItemHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.BatchHistoryId);
+            entity.HasIndex(e => e.DocumentId);
+            entity.HasIndex(e => e.IsSuccess);
+            entity.HasIndex(e => e.ProcessedAt);
+            entity.HasIndex(e => new { e.BatchHistoryId, e.IsSuccess });
+
+            entity.Property(e => e.DocumentNumber).HasMaxLength(100);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+            entity.Property(e => e.EtaLongId).HasMaxLength(200);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

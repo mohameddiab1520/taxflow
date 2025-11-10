@@ -2,7 +2,10 @@ using System.Diagnostics;
 using TaxFlow.Core.Entities;
 using TaxFlow.Core.Enums;
 using TaxFlow.Core.Interfaces;
+using TaxFlow.Core.Exceptions;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace TaxFlow.Infrastructure.Services.Processing;
 
@@ -16,6 +19,7 @@ public class BatchProcessingService : IBatchProcessingService
     private readonly IEtaSubmissionService _etaService;
     private readonly INotificationService _notificationService;
     private readonly ILogger<BatchProcessingService> _logger;
+    private readonly AsyncRetryPolicy _retryPolicy;
 
     private readonly Dictionary<Guid, CancellationTokenSource> _runningBatches = new();
 
@@ -31,6 +35,24 @@ public class BatchProcessingService : IBatchProcessingService
         _etaService = etaService;
         _notificationService = notificationService;
         _logger = logger;
+
+        // Configure Polly retry policy for batch processing operations
+        _retryPolicy = Policy
+            .Handle<EtaSubmissionException>()
+            .Or<DocumentSigningException>()
+            .Or<HttpRequestException>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                onRetry: (exception, timespan, retryCount, context) =>
+                {
+                    _logger.LogWarning(
+                        exception,
+                        "Batch processing operation retry {RetryCount} after {Delay}s: {Message}",
+                        retryCount,
+                        timespan.TotalSeconds,
+                        exception.Message);
+                });
     }
 
     public async Task<BatchProcessingResult> ProcessInvoiceBatchAsync(
@@ -253,7 +275,6 @@ public class BatchProcessingService : IBatchProcessingService
                 // Sign the document (if not already signed)
                 if (string.IsNullOrEmpty(invoice.Signature))
                 {
-                    // TODO: Serialize invoice to JSON
                     var jsonContent = System.Text.Json.JsonSerializer.Serialize(invoice);
                     var signResult = await _signatureService.SignJsonDocumentAsync(
                         jsonContent,
@@ -262,7 +283,10 @@ public class BatchProcessingService : IBatchProcessingService
 
                     if (!signResult.IsSuccess)
                     {
-                        throw new Exception($"Signing failed: {signResult.ErrorMessage}");
+                        throw new DocumentSigningException(
+                            $"Signing failed: {signResult.ErrorMessage}",
+                            invoice.Id.ToString(),
+                            certificateThumbprint);
                     }
 
                     invoice.Signature = signResult.SignatureValue;
@@ -291,7 +315,10 @@ public class BatchProcessingService : IBatchProcessingService
                 }
                 else
                 {
-                    throw new Exception($"ETA submission failed: {submissionResult.ErrorMessage}");
+                    throw new EtaSubmissionException(
+                        $"ETA submission failed: {submissionResult.ErrorMessage}",
+                        invoice.Id.ToString(),
+                        submissionResult.ErrorMessage);
                 }
             }
             catch (Exception ex)
@@ -370,7 +397,10 @@ public class BatchProcessingService : IBatchProcessingService
 
                     if (!signResult.IsSuccess)
                     {
-                        throw new Exception($"Signing failed: {signResult.ErrorMessage}");
+                        throw new DocumentSigningException(
+                            $"Signing failed: {signResult.ErrorMessage}",
+                            receipt.Id.ToString(),
+                            certificateThumbprint);
                     }
 
                     receipt.Signature = signResult.SignatureValue;
@@ -390,7 +420,10 @@ public class BatchProcessingService : IBatchProcessingService
                 }
                 else
                 {
-                    throw new Exception($"ETA submission failed: {submissionResult.ErrorMessage}");
+                    throw new EtaSubmissionException(
+                        $"ETA submission failed: {submissionResult.ErrorMessage}",
+                        receipt.Id.ToString(),
+                        submissionResult.ErrorMessage);
                 }
             }
             catch (Exception ex)
@@ -412,20 +445,111 @@ public class BatchProcessingService : IBatchProcessingService
         Guid batchId,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Implement retry logic for previously failed batch
-        throw new NotImplementedException();
+        _logger.LogInformation("Retrying failed submissions for batch {BatchId}", batchId);
+
+        // Get all failed invoices
+        var failedInvoices = await _unitOfWork.Invoices.GetByStatusAsync(DocumentStatus.Rejected);
+        var failedReceipts = await _unitOfWork.Receipts.GetByStatusAsync(DocumentStatus.Rejected);
+
+        var failedInvoiceIds = failedInvoices.Select(i => i.Id).ToList();
+        var failedReceiptIds = failedReceipts.Select(r => r.Id).ToList();
+
+        var result = new BatchProcessingResult
+        {
+            BatchId = batchId,
+            TotalDocuments = failedInvoiceIds.Count + failedReceiptIds.Count,
+            StartedAt = DateTime.UtcNow
+        };
+
+        if (result.TotalDocuments == 0)
+        {
+            _logger.LogInformation("No failed submissions to retry");
+            result.CompletedAt = DateTime.UtcNow;
+            return result;
+        }
+
+        // Get default certificate (in production, this should be parameterized)
+        var certificates = await _unitOfWork.Repository<Certificate>().GetAllAsync();
+        var defaultCert = certificates.FirstOrDefault(c => c.IsActive);
+
+        if (defaultCert == null)
+        {
+            result.ErrorMessage = "No active certificate found";
+            result.CompletedAt = DateTime.UtcNow;
+            return result;
+        }
+
+        var options = new BatchProcessingOptions
+        {
+            MaxRetryAttempts = 3,
+            RetryDelayMs = 1000,
+            MaxDegreeOfParallelism = 5
+        };
+
+        // Retry invoices if any
+        if (failedInvoiceIds.Any())
+        {
+            var invoiceResult = await ProcessInvoiceBatchAsync(
+                failedInvoiceIds,
+                defaultCert.Thumbprint,
+                options,
+                cancellationToken);
+
+            result.ItemResults.AddRange(invoiceResult.ItemResults);
+            result.SuccessfullyProcessed += invoiceResult.SuccessfullyProcessed;
+            result.Failed += invoiceResult.Failed;
+        }
+
+        // Retry receipts if any
+        if (failedReceiptIds.Any())
+        {
+            var receiptResult = await ProcessReceiptBatchAsync(
+                failedReceiptIds,
+                defaultCert.Thumbprint,
+                options,
+                cancellationToken);
+
+            result.ItemResults.AddRange(receiptResult.ItemResults);
+            result.SuccessfullyProcessed += receiptResult.SuccessfullyProcessed;
+            result.Failed += receiptResult.Failed;
+        }
+
+        result.CompletedAt = DateTime.UtcNow;
+        result.Duration = result.CompletedAt.Value - result.StartedAt;
+
+        _logger.LogInformation(
+            "Retry completed for batch {BatchId}: {Success}/{Total} successful",
+            batchId,
+            result.SuccessfullyProcessed,
+            result.TotalDocuments);
+
+        return result;
     }
 
     public async Task<BatchProcessingStatus> GetBatchStatusAsync(
         Guid batchId,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Implement batch status tracking
-        return new BatchProcessingStatus
+        var status = new BatchProcessingStatus
         {
             BatchId = batchId,
-            Status = _runningBatches.ContainsKey(batchId) ? "Processing" : "Completed"
+            Status = _runningBatches.ContainsKey(batchId) ? "Processing" : "Completed",
+            IsRunning = _runningBatches.ContainsKey(batchId),
+            CheckedAt = DateTime.UtcNow
         };
+
+        // Get statistics from database
+        var allInvoices = await _unitOfWork.Invoices.GetAllAsync();
+        var allReceipts = await _unitOfWork.Receipts.GetAllAsync();
+
+        status.TotalDocuments = allInvoices.Count() + allReceipts.Count();
+        status.SuccessfulDocuments = allInvoices.Count(i => i.Status == DocumentStatus.Accepted || i.Status == DocumentStatus.Submitted) +
+                                     allReceipts.Count(r => r.Status == DocumentStatus.Accepted || r.Status == DocumentStatus.Submitted);
+        status.FailedDocuments = allInvoices.Count(i => i.Status == DocumentStatus.Rejected || i.Status == DocumentStatus.Failed) +
+                                 allReceipts.Count(r => r.Status == DocumentStatus.Rejected || r.Status == DocumentStatus.Failed);
+        status.PendingDocuments = status.TotalDocuments - status.SuccessfulDocuments - status.FailedDocuments;
+
+        return status;
     }
 
     public async Task<bool> CancelBatchAsync(

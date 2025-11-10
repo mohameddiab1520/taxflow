@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TaxFlow.Core.Entities;
@@ -20,6 +21,7 @@ public partial class ReceiptViewModel : ViewModelBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITaxCalculationService _taxCalculationService;
     private readonly IEtaSubmissionService _etaSubmissionService;
+    private readonly IReportingService _reportingService;
     private readonly ILogger<ReceiptViewModel> _logger;
 
     [ObservableProperty]
@@ -93,11 +95,13 @@ public partial class ReceiptViewModel : ViewModelBase
         IUnitOfWork unitOfWork,
         ITaxCalculationService taxCalculationService,
         IEtaSubmissionService etaSubmissionService,
+        IReportingService reportingService,
         ILogger<ReceiptViewModel> logger)
     {
         _unitOfWork = unitOfWork;
         _taxCalculationService = taxCalculationService;
         _etaSubmissionService = etaSubmissionService;
+        _reportingService = reportingService;
         _logger = logger;
     }
 
@@ -130,7 +134,7 @@ public partial class ReceiptViewModel : ViewModelBase
         {
             LineNumber = Lines.Count + 1,
             DescriptionEn = QuickItemName,
-            DescriptionAr = QuickItemName, // TODO: Add Arabic translation
+            DescriptionAr = TranslateToArabic(QuickItemName),
             Quantity = QuickQuantity,
             UnitPrice = QuickPrice,
             UnitType = "EA",
@@ -244,8 +248,21 @@ public partial class ReceiptViewModel : ViewModelBase
             _logger.LogInformation("Receipt {ReceiptNumber} completed. Total: {Total:C}",
                 ReceiptNumber, TotalAmount);
 
-            // TODO: Print receipt
-            // TODO: Submit to ETA (optional for B2C)
+            // Print receipt
+            await PrintReceiptAsync(receipt.Id);
+
+            // Submit to ETA (optional for B2C)
+            var shouldSubmit = MessageBox.Show(
+                "Do you want to submit this receipt to ETA?",
+                "Submit to ETA",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) == MessageBoxResult.Yes;
+
+            if (shouldSubmit)
+            {
+                ReceiptId = receipt.Id;
+                await SubmitToEtaAsync();
+            }
 
             // Reset for next sale
             await ResetReceiptAsync();
@@ -415,6 +432,75 @@ public partial class ReceiptViewModel : ViewModelBase
         {
             AmountTendered = TotalAmount;
         }
+    }
+
+    /// <summary>
+    /// Prints receipt using reporting service
+    /// </summary>
+    private async Task PrintReceiptAsync(Guid receiptId)
+    {
+        try
+        {
+            var pdfBytes = await _reportingService.GenerateReceiptPdfAsync(receiptId);
+
+            // Save to temp file and open with default PDF viewer
+            var tempFile = Path.Combine(Path.GetTempPath(), $"Receipt_{ReceiptNumber}.pdf");
+            await File.WriteAllBytesAsync(tempFile, pdfBytes);
+
+            // Open PDF with default application
+            var processInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = tempFile,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(processInfo);
+
+            _logger.LogInformation("Receipt {ReceiptNumber} printed successfully", ReceiptNumber);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error printing receipt {ReceiptNumber}", ReceiptNumber);
+            MessageBox.Show(
+                $"Failed to print receipt: {ex.Message}",
+                "Print Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// Translates text to Arabic (simple dictionary-based approach)
+    /// </summary>
+    private string TranslateToArabic(string englishText)
+    {
+        // Simple translation dictionary for common POS items
+        var translations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Water", "ماء" },
+            { "Juice", "عصير" },
+            { "Coffee", "قهوة" },
+            { "Tea", "شاي" },
+            { "Bread", "خبز" },
+            { "Milk", "لبن" },
+            { "Rice", "أرز" },
+            { "Sugar", "سكر" },
+            { "Salt", "ملح" },
+            { "Oil", "زيت" },
+            { "Chicken", "دجاج" },
+            { "Beef", "لحم بقري" },
+            { "Fish", "سمك" },
+            { "Vegetables", "خضروات" },
+            { "Fruits", "فواكه" },
+            { "Cheese", "جبنة" },
+            { "Eggs", "بيض" },
+            { "Butter", "زبدة" },
+            { "Yogurt", "زبادي" },
+            { "Pasta", "مكرونة" }
+        };
+
+        return translations.TryGetValue(englishText, out var arabicText)
+            ? arabicText
+            : englishText; // Return original if no translation found
     }
 }
 

@@ -3,7 +3,10 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using TaxFlow.Core.Exceptions;
 using Serilog;
+using Polly;
+using Polly.Retry;
 
 namespace TaxFlow.Infrastructure.Services.ETA;
 
@@ -14,6 +17,7 @@ public class EtaAuthenticationService : IEtaAuthenticationService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
     private string? _accessToken;
     private DateTime _tokenExpiryTime;
 
@@ -28,6 +32,21 @@ public class EtaAuthenticationService : IEtaAuthenticationService
     {
         _httpClient = httpClient;
         _configuration = configuration;
+
+        // Configure Polly retry policy for transient HTTP errors
+        _retryPolicy = Policy<HttpResponseMessage>
+            .Handle<HttpRequestException>()
+            .Or<TaskCanceledException>()
+            .OrResult(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                onRetry: (outcome, timespan, retryCount, context) =>
+                {
+                    Log.Warning("ETA authentication retry {RetryCount} after {Delay}s due to {Reason}",
+                        retryCount, timespan.TotalSeconds,
+                        outcome.Exception?.Message ?? outcome.Result?.ReasonPhrase ?? "Unknown");
+                });
     }
 
     public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -83,15 +102,20 @@ public class EtaAuthenticationService : IEtaAuthenticationService
                 Encoding.UTF8.GetBytes($"{TaxpayerPin}:{TaxpayerSecret}"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic", taxpayerAuth);
 
-            // Send request
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+            // Send request with retry policy
+            var response = await _retryPolicy.ExecuteAsync(async () =>
+                await _httpClient.SendAsync(request, cancellationToken));
 
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
                 Log.Error("ETA authentication failed: {StatusCode} - {Error}",
                     response.StatusCode, errorContent);
-                throw new Exception($"ETA authentication failed: {response.StatusCode}");
+                throw new EtaSubmissionException(
+                    $"ETA authentication failed: {response.StatusCode}",
+                    "Authentication",
+                    errorContent,
+                    (int)response.StatusCode);
             }
 
             // Parse response
@@ -100,7 +124,10 @@ public class EtaAuthenticationService : IEtaAuthenticationService
 
             if (authResponse == null || string.IsNullOrEmpty(authResponse.AccessToken))
             {
-                throw new Exception("Invalid authentication response from ETA");
+                throw new EtaSubmissionException(
+                    "Invalid authentication response from ETA",
+                    "Authentication",
+                    responseContent);
             }
 
             // Store token
